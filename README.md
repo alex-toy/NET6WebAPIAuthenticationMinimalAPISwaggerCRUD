@@ -12,6 +12,24 @@ We will study the following points :
 - Setup Swagger support and configure bearer authentication with Swagger
 - Understand the basics of Swagger Documentation in .NET 6
 
+### Packages to install
+```
+Microsoft.AspNetCore.Authentication.JwtBearer
+Microsoft.AspNetCore.Identity.EntityFrameworkCore
+Microsoft.AspNetCore.Identity.UI
+Microsoft.EntityFrameworkCore.SqlServer
+```
+
+
+
+## Build a role-based user authentication system using ASP.NET Core Web API and Angular
+
+
+
+
+
+
+
 ### Virtual Machines
 
 - create a virtual machine
