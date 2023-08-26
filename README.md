@@ -11,3 +11,8 @@ We will study the following points :
 - Configure the API Endpoints for Authentication and Authorization with JWT Bearer
 - Setup Swagger support and configure bearer authentication with Swagger
 - Understand the basics of Swagger Documentation in .NET 6
+
+### Virtual Machines
+
+- create a virtual machine
+<img src="/pictures/vm.png" title="virtual machine"  width="900">
