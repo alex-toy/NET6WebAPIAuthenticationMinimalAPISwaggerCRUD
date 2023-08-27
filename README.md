@@ -15,9 +15,9 @@ We will study the following points :
 ### Packages to install
 ```
 Microsoft.AspNetCore.Authentication.JwtBearer
-Microsoft.AspNetCore.Identity.EntityFrameworkCore
-Microsoft.AspNetCore.Identity.UI
-Microsoft.EntityFrameworkCore.SqlServer
+Microsoft.IdentityModel.Tokens
+Swashbuckle.AspNetCore
+System.IdentityModel.Tokens.Jwt
 ```
 
 
