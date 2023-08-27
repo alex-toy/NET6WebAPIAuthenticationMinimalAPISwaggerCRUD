@@ -8,6 +8,7 @@ using System.Text;
 
 namespace MinimalJwt.Controllers
 {
+    [Route("api/[controller]")]
     public class LoginController : Controller
     {
         private readonly IUserService _userService;
@@ -19,7 +20,8 @@ namespace MinimalJwt.Controllers
             _configuration = config;
         }
 
-        public IResult Login(UserLogin user)
+        [HttpPost("Login")]
+        public IResult Login([FromBody] UserLogin user)
         {
             bool credentialsOK = string.IsNullOrEmpty(user.Username) || string.IsNullOrEmpty(user.Password);
             if (!credentialsOK) Results.BadRequest("Invalid user credentials"); ;

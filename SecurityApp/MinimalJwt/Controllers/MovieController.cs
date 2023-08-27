@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MinimalJwt.Models;
 using MinimalJwt.Services;
@@ -6,7 +7,6 @@ using MinimalJwt.Services;
 namespace MinimalJwt.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize]
     public class MovieController : Controller
     {
         private readonly IMovieService _movieService;
@@ -34,8 +34,9 @@ namespace MinimalJwt.Controllers
             return Results.Ok(movies);
         }
 
-        [HttpPost]
-        public IResult Create(Movie movie)
+        [HttpPost("Create")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Administrator")]
+        public IResult Create([FromBody] Movie movie)
         {
             var result = _movieService.Create(movie);
             return Results.Ok(result);

@@ -20,6 +20,21 @@ Swashbuckle.AspNetCore
 System.IdentityModel.Tokens.Jwt
 ```
 
+### Use the API
+
+- login with wrong password
+<img src="/pictures/api.png" title="login with wrong password"  width="900">
+
+- login with correct password
+<img src="/pictures/api2.png" title="login with wrong password"  width="900">
+
+- use protected route without credentials
+<img src="/pictures/api3.png" title="login with wrong password"  width="900">
+
+
+- use protected route with credentials
+<img src="/pictures/api4.png" title="login with wrong password"  width="900">
+
 
 
 ## Build a role-based user authentication system using ASP.NET Core Web API and Angular
@@ -29,8 +44,3 @@ System.IdentityModel.Tokens.Jwt
 
 
 
-
-### Virtual Machines
-
-- create a virtual machine
-<img src="/pictures/vm.png" title="virtual machine"  width="900">
