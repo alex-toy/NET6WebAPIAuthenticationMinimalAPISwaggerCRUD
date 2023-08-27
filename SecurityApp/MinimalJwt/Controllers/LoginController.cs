@@ -21,38 +21,49 @@ namespace MinimalJwt.Controllers
 
         public IResult Login(UserLogin user)
         {
-            if (!string.IsNullOrEmpty(user.Username) && !string.IsNullOrEmpty(user.Password))
+            bool credentialsOK = string.IsNullOrEmpty(user.Username) || string.IsNullOrEmpty(user.Password);
+            if (!credentialsOK) Results.BadRequest("Invalid user credentials"); ;
+
+            User loggedInUser = _userService.Get(user);
+            if (loggedInUser is null) return Results.NotFound("User not found");
+
+            Claim[] claims = GetClaims(loggedInUser);
+            string tokenString = GenerateToken(claims);
+
+            return Results.Ok(tokenString);
+        }
+
+        private Claim[] GetClaims(User loggedInUser)
+        {
+            Claim[] claims = new[]
             {
-                var loggedInUser = _userService.Get(user);
-                if (loggedInUser is null) return Results.NotFound("User not found");
+                new Claim(ClaimTypes.NameIdentifier, loggedInUser.Username),
+                new Claim(ClaimTypes.Email, loggedInUser.EmailAddress),
+                new Claim(ClaimTypes.GivenName, loggedInUser.GivenName),
+                new Claim(ClaimTypes.Surname, loggedInUser.Surname),
+                new Claim(ClaimTypes.Role, loggedInUser.Role)
+            };
 
-                var claims = new[]
-                {
-                    new Claim(ClaimTypes.NameIdentifier, loggedInUser.Username),
-                    new Claim(ClaimTypes.Email, loggedInUser.EmailAddress),
-                    new Claim(ClaimTypes.GivenName, loggedInUser.GivenName),
-                    new Claim(ClaimTypes.Surname, loggedInUser.Surname),
-                    new Claim(ClaimTypes.Role, loggedInUser.Role)
-                };
+            return claims;
+        }
 
-                var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetValue<string>("Jwt:Key")));
-                var signingCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
+        private string GenerateToken(Claim[] claims)
+        {
+            var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetValue<string>("Jwt:Key")));
+            var signingCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
 
-                var token = new JwtSecurityToken
-                (
-                    issuer: _configuration.GetValue<string>("Jwt:Issuer"),
-                    audience: _configuration.GetValue<string>("Jwt:Audience"),
-                    claims: claims,
-                    expires: DateTime.UtcNow.AddDays(60),
-                    notBefore: DateTime.UtcNow,
-                    signingCredentials: signingCredentials
-                );
+            var token = new JwtSecurityToken
+            (
+                issuer: _configuration.GetValue<string>("Jwt:Issuer"),
+                audience: _configuration.GetValue<string>("Jwt:Audience"),
+                claims: claims,
+                expires: DateTime.UtcNow.AddDays(60),
+                notBefore: DateTime.UtcNow,
+                signingCredentials: signingCredentials
+            );
 
-                var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-
-                return Results.Ok(tokenString);
-            }
-            return Results.BadRequest("Invalid user credentials");
+            string tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+            return tokenString;
         }
     }
 }
