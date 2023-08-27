@@ -44,6 +44,7 @@ System.IdentityModel.Tokens.Jwt
 - install packages in *CoffeeShopAPI*
 ```
 Microsoft.EntityFrameworkCore.SqlServer -Version 6.0.0
+Microsoft.EntityFrameworkCore.Tools Version="6.0.1"
 BCrypt.Net-Next Version="4.0.2"
 Microsoft.AspNetCore.Authentication.JwtBearer Version="6.0.0"
 Microsoft.AspNetCore.Mvc.NewtonsoftJson Version="6.0.0"

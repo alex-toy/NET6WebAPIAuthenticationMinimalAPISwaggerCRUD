@@ -1,11 +1,9 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.IdentityModel.Tokens;
 using startup_kit_api.Models;
 using System.Text;
 
@@ -33,10 +31,8 @@ namespace startup_kit_api
                 options.UseSqlServer(connectionString);
             });
 
-
             services.AddCors();
 
-            var key = Encoding.UTF8.GetBytes(Properties.Resources.JWT_Secret);
             services.AddAuthenticationSchemeSpec();
         }
 
