@@ -65,6 +65,12 @@ Add-Migration InitialCreate
 Update-Database
 ```
 
+### Use the API
+
+- signup
+<img src="/pictures/signup.png" title="signup"  width="900">
+<img src="/pictures/signup2.png" title="signup"  width="900">
+
 
 
 

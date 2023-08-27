@@ -18,22 +18,21 @@ namespace startup_kit_api.Controllers
             _context = context;
         }
 
-        [HttpPost("sign-in")]
+        [HttpPost("signin")]
         public async Task<ActionResult<User>> SignIn([FromBody] User user)
         {
             try
             {
-                var dbuser = await _context.Users
-                    .Include(x => x.Role)
-                    .FirstOrDefaultAsync(x => x.Email == user.Email);
-                if (dbuser == null) return NotFound();
-                // Verify password 
-                if (Utils.Verify(user.Password, dbuser.Password))
-                {
-                    dbuser.Token = Utils.GenerateJWTToken(dbuser.Id, user.RememberMe);
-                    return Ok(dbuser);
-                }
-                return BadRequest();
+                var userDb = await _context.Users.Include(x => x.Role).FirstOrDefaultAsync(x => x.Email == user.Email);
+                bool userExist = userDb != null;
+
+                if (!userExist) return NotFound();
+
+                bool credentialsOK = TokenHelper.IsCredentialsOK(user.Password, userDb.Password);
+                if (!credentialsOK) return BadRequest();
+                
+                userDb.Token = TokenHelper.GenerateJWTToken(userDb.Id, user.RememberMe);
+                return Ok(userDb);
             }
             catch (Exception ex)
             {
@@ -41,61 +40,50 @@ namespace startup_kit_api.Controllers
             }
         }
 
-        [HttpPost("sign-up")]
+        [HttpPost("signup")]
         public async Task<ActionResult<User>> SignUp([FromBody] User user)
         {
             var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                //Check if user already exist in the database
-                var dbuser = await _context.Users
-                    .Include(x => x.Role)
-                    .FirstOrDefaultAsync(x => x.Email == user.Email);
+                User userDb = await _context.Users.Include(x => x.Role).FirstOrDefaultAsync(x => x.Email == user.Email);
+                bool userExist = userDb != null;
+                if (userExist) return Conflict(); // HTTP:409
 
-                //If this user already exist return a conflit 
-                if (dbuser != null) return Conflict(); // HTTP:409
+                BindUserToTenant(user);
 
-                //Create and bind a tenant to the signed up user
-                //When this user will add another users they will also bind to this tenant
-                //So they can see same data in the protected area 
-                Tenant tenant = new Tenant()
-                {
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
-                user.Tenant = tenant;
-                user.CreatedAt = DateTime.Now;
-                user.UpdatedAt = DateTime.Now;
+                if (!string.IsNullOrEmpty(user.Password)) user.Password = TokenHelper.Encrypt(user.Password); // Hash password
 
-                //Check that password is not null or empty
-                if (!string.IsNullOrEmpty(user.Password))
-                    user.Password = Utils.Encrypt(user.Password); // Hash password
-
-                //Store the user in the database
                 await _context.Users.AddAsync(user);
                 await _context.SaveChangesAsync();
 
-                //Generate a token to let user access the protected area after sign up
-                user.Token = Utils.GenerateJWTToken(user.Id, user.RememberMe);
+                user.Token = TokenHelper.GenerateJWTToken(user.Id, user.RememberMe);
 
-                //We will need the user role to access the protected area
                 user.Role = await _context.Roles.FirstOrDefaultAsync(x => x.Id == user.RoleId);
 
-                //Send welcome email after sign up
-                await Utils.SendWelcomeEmail(user.Fullname, user.Email);
+                await EmailHelper.SendWelcomeEmail(user.Fullname, user.Email);
 
-                //Commit transaction if every is right.
                 await transaction.CommitAsync();
 
                 return Created("", user);
             }
             catch (Exception ex)
             {
-                // Rollback transaction if something went wrong. ex: while sending welcome email
-                //That avoid storing user into database
                 await transaction.RollbackAsync();
                 return BadRequest(ex);
             }
+        }
+
+        private static void BindUserToTenant(User user)
+        {
+            Tenant tenant = new Tenant()
+            {
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            user.Tenant = tenant;
+            user.CreatedAt = DateTime.Now;
+            user.UpdatedAt = DateTime.Now;
         }
 
         [HttpPost("send-recovery-link")]
@@ -103,17 +91,12 @@ namespace startup_kit_api.Controllers
         {
             try
             {
-                var dbuser = await _context.Users
-                    .Include(x => x.Role)
-                    .FirstOrDefaultAsync(x => x.Email == user.Email);
+                var dbuser = await _context.Users.Include(x => x.Role).FirstOrDefaultAsync(x => x.Email == user.Email);
                 if (dbuser != null)
                 {
-                    //This will generate a token that will be available for 24h.
-                    string recoveryToken = Utils.GenerateJWTTokenByEmail(dbuser.Email);
-                    //With this link that have in param the token the user can access
-                    //The password update page if the token still available
+                    string recoveryToken = TokenHelper.GenerateJWTTokenByEmail(dbuser.Email);
                     string recoveryLink = $"{user.AppOriginUrl}/auth/reset-password/{recoveryToken}";
-                    bool isSent = await Utils.SendRecoveryLinkEmail(recoveryLink, dbuser.Fullname, dbuser.Email);
+                    bool isSent = await EmailHelper.SendRecoveryLinkEmail(recoveryLink, dbuser.Fullname, dbuser.Email);
                     if (isSent) return Created("", new { recoveryToken, dbuser.Email });
                 }
                 return NotFound();
@@ -130,12 +113,11 @@ namespace startup_kit_api.Controllers
         {
             try
             {
-                var dbuser = await _context.Users
-                    .Include(x => x.Role)
-                    .FirstOrDefaultAsync(x => x.Email == user.Email);
-                if (dbuser != null)
+                var dbuser = await _context.Users.Include(x => x.Role).FirstOrDefaultAsync(x => x.Email == user.Email);
+                bool userExists = dbuser != null;
+                if (userExists)
                 {
-                    dbuser.Password = Utils.Encrypt(user.Password);
+                    dbuser.Password = TokenHelper.Encrypt(user.Password);
                     _context.Users.Update(dbuser);
                     await _context.SaveChangesAsync();
                     return Ok(dbuser);

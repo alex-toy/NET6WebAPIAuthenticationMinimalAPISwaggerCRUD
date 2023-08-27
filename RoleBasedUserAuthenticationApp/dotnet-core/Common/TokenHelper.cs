@@ -1,21 +1,20 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
 
 namespace startup_kit_api.Common
 {
-    public class Utils
+    public class TokenHelper
     {
         public static string Encrypt(string password)
         {
             return BCrypt.Net.BCrypt.HashPassword(password);
         }
 
-        public static bool Verify(string password, string hashedPassword)
+        public static bool IsCredentialsOK(string password, string hashedPassword)
         {
             return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
         }
@@ -23,7 +22,6 @@ namespace startup_kit_api.Common
         public static string GenerateJWTToken(long userId, bool rememberMe)
         {
             IdentityOptions options = new IdentityOptions();
-            // We will setup the parameters of token generation
             SecurityTokenDescriptor tokenDescription = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(
@@ -62,32 +60,6 @@ namespace startup_kit_api.Common
             JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
             SecurityToken securityToken = tokenHandler.CreateToken(tokenDescription);
             return tokenHandler.WriteToken(securityToken);
-        }
-
-        public static async Task<bool> SendWelcomeEmail(string fullname, string email)
-        {
-            using EmailService emailService = new EmailService();
-            emailService._body.Append("<html>");
-            emailService._body.Append($"Hello {fullname}! <br /><br />");
-            emailService._body.Append("Thank you for signing up!  <br /><br />");
-            emailService._body.Append("Regards <br /><br />");
-            emailService._body.Append("Company brand");
-            emailService._body.Append("</html>");
-            return await emailService.SendEmailAsync(fullname, email, $"Welcome {fullname}");
-        }
-
-        public static async Task<bool> SendRecoveryLinkEmail(string link, string fullname, string userEmal)
-        {
-            using EmailService emailService = new EmailService();
-            emailService._body.Append("<html>");
-            emailService._body.Append($"Hello {fullname}! <br /><br />");
-            emailService._body.Append("Please click on the link below o change your password<br /><br />");
-            emailService._body.Append("<a href='" + link + "' target='_blank'>Click here</a> <br /><br />");
-            emailService._body.Append("This link is available for 24h <br /><br />");
-            emailService._body.Append("Regards <br /><br />");
-            emailService._body.Append("Company brand");
-            emailService._body.Append("</html>");
-            return await emailService.SendEmailAsync(fullname, userEmal, $"Password recovery...");
         }
     }
 }
