@@ -39,7 +39,30 @@ System.IdentityModel.Tokens.Jwt
 
 ## Build a role-based user authentication system using ASP.NET Core Web API and Angular
 
+### Install packages
 
+- install packages in *CoffeeShopAPI*
+```
+Microsoft.EntityFrameworkCore.SqlServer -Version 6.0.0
+BCrypt.Net-Next Version="4.0.2"
+Microsoft.AspNetCore.Authentication.JwtBearer Version="6.0.0"
+Microsoft.AspNetCore.Mvc.NewtonsoftJson Version="6.0.0"
+Microsoft.EntityFrameworkCore.Design Version="6.0.0"
+Microsoft.EntityFrameworkCore.InMemory Version="6.0.0"
+Microsoft.VisualStudio.Web.CodeGeneration.Design Version="6.0.0"
+Microsoft.AspNetCore.Mvc.Cors Version="2.2.0"
+Newtonsoft.Json Version="13.0.1"
+PayPal.SDK.NETCore Version="1.9.1.2"
+RestSharp Version="106.11.8-alpha.0.14"
+Select.HtmlToPdf.NetCore Version="21.1.0"
+Stripe.net Version="39.31.0"
+```
+
+- Migrations
+```
+Add-Migration InitialCreate
+Update-Database
+```
 
 
 
