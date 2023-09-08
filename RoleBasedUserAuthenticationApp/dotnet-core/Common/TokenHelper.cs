@@ -21,7 +21,8 @@ namespace startup_kit_api.Common
 
         public static string GenerateJWTToken(long userId, bool rememberMe)
         {
-            IdentityOptions options = new IdentityOptions();
+            byte[] secret = Encoding.UTF8.GetBytes(Properties.Resources.JWT_Secret);
+            SymmetricSecurityKey symmetricSecurityKey = new SymmetricSecurityKey(secret);
             SecurityTokenDescriptor tokenDescription = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(
@@ -30,10 +31,7 @@ namespace startup_kit_api.Common
                     }
                 ),
                 Expires = rememberMe ? DateTime.UtcNow.AddDays(7) : DateTime.UtcNow.AddDays(1),
-                SigningCredentials = new SigningCredentials(
-                    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Properties.Resources.JWT_Secret)),
-                    SecurityAlgorithms.HmacSha256Signature
-                )
+                SigningCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256Signature)
             };
             JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
             SecurityToken securityToken = tokenHandler.CreateToken(tokenDescription);
@@ -42,24 +40,29 @@ namespace startup_kit_api.Common
 
         public static string GenerateJWTTokenByEmail(string email)
         {
-            IdentityOptions options = new IdentityOptions();
-            // We will setup the parameters of token generation
-            SecurityTokenDescriptor tokenDescription = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(
-                    new Claim[]{
-                        new Claim("email", email)
-                    }
-                ),
-                Expires = DateTime.UtcNow.AddDays(1),
-                SigningCredentials = new SigningCredentials(
-                    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Properties.Resources.JWT_Secret)),
-                    SecurityAlgorithms.HmacSha256Signature
-                )
-            };
+            SecurityTokenDescriptor tokenDescription = GetTokenDescription(email);
             JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
             SecurityToken securityToken = tokenHandler.CreateToken(tokenDescription);
             return tokenHandler.WriteToken(securityToken);
+        }
+
+        private static SecurityTokenDescriptor GetTokenDescription(string email)
+        {
+            Claim[] claims = GetClaims(email);
+            byte[] secret = Encoding.UTF8.GetBytes(Properties.Resources.JWT_Secret);
+            SymmetricSecurityKey symmetricSecurityKey = new SymmetricSecurityKey(secret);
+
+            return new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddDays(1),
+                SigningCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256Signature)
+            };
+        }
+
+        private static Claim[] GetClaims(string email)
+        {
+            return new Claim[] { new Claim("email", email) };
         }
     }
 }

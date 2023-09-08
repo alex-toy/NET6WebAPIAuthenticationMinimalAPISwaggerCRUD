@@ -71,6 +71,9 @@ Update-Database
 <img src="/pictures/signup.png" title="signup"  width="900">
 <img src="/pictures/signup2.png" title="signup"  width="900">
 
+- send-recovery-link
+<img src="/pictures/send_recovery_link.png" title="send recovery link"  width="900">
+
 
 
 

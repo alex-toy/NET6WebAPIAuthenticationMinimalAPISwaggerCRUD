@@ -23,7 +23,7 @@ namespace startup_kit_api.Controllers
         {
             try
             {
-                var userDb = await _context.Users.Include(x => x.Role).FirstOrDefaultAsync(x => x.Email == user.Email);
+                User userDb = await GetUserDbByEmail(user.Email);
                 bool userExist = userDb != null;
 
                 if (!userExist) return NotFound();
@@ -46,22 +46,24 @@ namespace startup_kit_api.Controllers
             var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                User userDb = await _context.Users.Include(x => x.Role).FirstOrDefaultAsync(x => x.Email == user.Email);
+                User userDb = await GetUserDbByEmail(user.Email);
+
                 bool userExist = userDb != null;
-                if (userExist) return Conflict(); // HTTP:409
+                if (userExist) return Conflict("user already exists"); // HTTP:409
 
                 BindUserToTenant(user);
 
-                if (!string.IsNullOrEmpty(user.Password)) user.Password = TokenHelper.Encrypt(user.Password); // Hash password
+                bool userHasPassword = !string.IsNullOrEmpty(user.Password);
+                if (userHasPassword) user.Password = TokenHelper.Encrypt(user.Password); // Hash password
 
                 await _context.Users.AddAsync(user);
                 await _context.SaveChangesAsync();
 
                 user.Token = TokenHelper.GenerateJWTToken(user.Id, user.RememberMe);
 
-                user.Role = await _context.Roles.FirstOrDefaultAsync(x => x.Id == user.RoleId);
+                user.Role = await GetUserRoleById(user.RoleId);
 
-                await EmailHelper.SendWelcomeEmail(user.Fullname, user.Email);
+                EmailHelper.SendWelcomeEmail(user.Fullname, user.Email);
 
                 await transaction.CommitAsync();
 
@@ -72,6 +74,11 @@ namespace startup_kit_api.Controllers
                 await transaction.RollbackAsync();
                 return BadRequest(ex);
             }
+        }
+
+        private async Task<Role> GetUserRoleById(int roleId)
+        {
+            return await _context.Roles.FirstOrDefaultAsync(x => x.Id == roleId);
         }
 
         private static void BindUserToTenant(User user)
@@ -91,15 +98,16 @@ namespace startup_kit_api.Controllers
         {
             try
             {
-                var dbuser = await _context.Users.Include(x => x.Role).FirstOrDefaultAsync(x => x.Email == user.Email);
-                if (dbuser != null)
-                {
-                    string recoveryToken = TokenHelper.GenerateJWTTokenByEmail(dbuser.Email);
-                    string recoveryLink = $"{user.AppOriginUrl}/auth/reset-password/{recoveryToken}";
-                    bool isSent = await EmailHelper.SendRecoveryLinkEmail(recoveryLink, dbuser.Fullname, dbuser.Email);
-                    if (isSent) return Created("", new { recoveryToken, dbuser.Email });
-                }
-                return NotFound();
+                User userDb = await GetUserDbByEmail(user.Email);
+                if (userDb == null) return NotFound();
+
+                string recoveryToken = TokenHelper.GenerateJWTTokenByEmail(userDb.Email);
+                string recoveryLink = $"{user.AppOriginUrl}/auth/reset-password/{recoveryToken}";
+
+                bool isSent = EmailHelper.SendRecoveryLinkEmail(recoveryLink, userDb.Fullname, userDb.Email);
+                if (!isSent) return StatusCode(500, "mail could not be sent");
+
+                return Created("", new { recoveryToken, userDb.Email });
             }
             catch (Exception ex)
             {
@@ -113,21 +121,24 @@ namespace startup_kit_api.Controllers
         {
             try
             {
-                var dbuser = await _context.Users.Include(x => x.Role).FirstOrDefaultAsync(x => x.Email == user.Email);
-                bool userExists = dbuser != null;
-                if (userExists)
-                {
-                    dbuser.Password = TokenHelper.Encrypt(user.Password);
-                    _context.Users.Update(dbuser);
-                    await _context.SaveChangesAsync();
-                    return Ok(dbuser);
-                }
-                return BadRequest();
+                User userDb = await GetUserDbByEmail(user.Email);
+                bool userExists = userDb != null;
+                if (!userExists) return BadRequest();
+
+                userDb.Password = TokenHelper.Encrypt(user.Password);
+                _context.Users.Update(userDb);
+                await _context.SaveChangesAsync();
+                return Ok(userDb);
             }
             catch (Exception ex)
             {
                 return BadRequest(ex);
             }
+        }
+
+        private async Task<User> GetUserDbByEmail(string email)
+        {
+            return await _context.Users.Include(x => x.Role).FirstOrDefaultAsync(x => x.Email == email);
         }
     }
 }

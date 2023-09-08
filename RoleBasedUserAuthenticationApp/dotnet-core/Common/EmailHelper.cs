@@ -4,7 +4,7 @@ namespace startup_kit_api.Common
 {
     public class EmailHelper
     {
-        public static async Task<bool> SendWelcomeEmail(string fullname, string email)
+        public static bool SendWelcomeEmail(string fullname, string userEmail)
         {
             using EmailService emailService = new EmailService();
             emailService._body.Append("<html>");
@@ -13,10 +13,10 @@ namespace startup_kit_api.Common
             emailService._body.Append("Regards <br /><br />");
             emailService._body.Append("Company brand");
             emailService._body.Append("</html>");
-            return await emailService.SendEmailAsync(fullname, email, $"Welcome {fullname}");
+            return emailService.SendEmailAsync(userEmail, $"Welcome {fullname}");
         }
 
-        public static async Task<bool> SendRecoveryLinkEmail(string link, string fullname, string userEmal)
+        public static bool SendRecoveryLinkEmail(string link, string fullname, string userEmail)
         {
             using EmailService emailService = new EmailService();
             emailService._body.Append("<html>");
@@ -27,7 +27,7 @@ namespace startup_kit_api.Common
             emailService._body.Append("Regards <br /><br />");
             emailService._body.Append("Company brand");
             emailService._body.Append("</html>");
-            return await emailService.SendEmailAsync(fullname, userEmal, $"Password recovery...");
+            return emailService.SendEmailAsync(userEmail, $"Password recovery...");
         }
     }
 }
