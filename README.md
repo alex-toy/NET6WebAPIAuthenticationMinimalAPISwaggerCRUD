@@ -39,7 +39,9 @@ System.IdentityModel.Tokens.Jwt
 
 ## Build a role-based user authentication system using ASP.NET Core Web API and Angular
 
-### Install packages
+### Backend
+
+#### Install packages
 
 - install packages in *CoffeeShopAPI*
 ```
@@ -65,7 +67,7 @@ Add-Migration InitialCreate
 Update-Database
 ```
 
-### Use the API
+#### Use the API
 
 - signup
 <img src="/pictures/signup.png" title="signup"  width="900">
@@ -75,5 +77,9 @@ Update-Database
 <img src="/pictures/send_recovery_link.png" title="send recovery link"  width="900">
 
 
+### Backend
 
-
+#### Useful commands
+```
+ng g m my-module --routing=true
+```
