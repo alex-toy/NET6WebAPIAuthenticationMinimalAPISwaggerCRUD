@@ -6,6 +6,7 @@ import { SignInComponent } from './sign-in/sign-in.component';
 import { SignUpComponent } from './sign-up/sign-up.component';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
 import { RequestPasswordComponent } from './request-password/request-password.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 
 @NgModule({
@@ -17,7 +18,16 @@ import { RequestPasswordComponent } from './request-password/request-password.co
   ],
   imports: [
     CommonModule,
-    AuthRoutingModule
+    AuthRoutingModule,
+    FormsModule,
+    ReactiveFormsModule,
+    NbInputModule,
+    NbCheckboxModule,
+    NbButtonModule,
+    NbSpinnerModule,
+    NbCardModule,
+    NbAlertModule,
+    NbLayoutModule
   ]
 })
 export class AuthModule { }
